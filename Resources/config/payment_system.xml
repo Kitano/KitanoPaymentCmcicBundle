@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<container xmlns="http://symfony.com/schema/dic/services"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+
+    <parameters>
+        <parameter key="kitano_payment_cmcic.payment_system.cmcic.class">Kitano\Bundle\PaymentCmcicBundle\PaymentSystem\CmcicPaymentSystem</parameter>
+    </parameters>
+
+    <services>
+        <service id="kitano_payment_cmcic.payment_system.cmcic" class="%kitano_payment_cmcic.payment_system.cmcic.class%">
+            <argument type="service" id="kitano_payment.repository.transaction" />
+            <argument type="service" id="event_dispatcher" />
+            <argument type="service" id="templating" />
+            <call method="setVersion">
+                <argument>%kitano_payment_cmcic.config.version%</argument>
+            </call>
+            <call method="setTpe">
+                <argument>%kitano_payment_cmcic.config.tpe%</argument>
+            </call>
+            <call method="setKey">
+                <argument>%kitano_payment_cmcic.config.key%</argument>
+            </call>
+            <call method="setLang">
+                <argument>%kitano_payment_cmcic.config.lang%</argument>
+            </call>
+            <call method="setSandbox">
+                <argument>%kitano_payment_cmcic.config.sandbox%</argument>
+            </call>
+            <call method="setUrls">
+                <argument type="collection">
+                    <argument key="sandbox" type="collection">
+                        <argument key="authorize">%kitano_payment_cmcic.config.url.sandbox.authorize%</argument>
+                        <argument key="capture">%kitano_payment_cmcic.config.url.sandbox.capture%</argument>
+                    </argument>
+                    <argument key="production" type="collection">
+                        <argument key="authorize">%kitano_payment_cmcic.config.url.production.authorize%</argument>
+                        <argument key="capture">%kitano_payment_cmcic.config.url.production.capture%</argument>
+                    </argument>
+                </argument>
+            </call>
+            <call method="setEmail">
+                <argument>%kitano_payment_cmcic.config.email%</argument>
+            </call>
+            <call method="setCompanyCode">
+                <argument>%kitano_payment_cmcic.config.company_code%</argument>
+            </call>
+            <call method="setCertificatePath">
+                <argument>%kitano_payment_cmcic.config.certificate_path%</argument>
+            </call>
+        </service>
+    </services>
+
+</container>
