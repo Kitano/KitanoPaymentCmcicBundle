@@ -4,8 +4,8 @@ namespace Kitano\Bundle\PaymentCmcicBundle\PaymentSystem;
 
 use Kitano\Bundle\PaymentBundle\PaymentSystem\CreditCardInterface;
 use Kitano\Bundle\PaymentBundle\Model\Transaction;
-use Kitano\Bundle\PaymentBundle\Model\CreditCard\AuthorizationTransaction;
-use Kitano\Bundle\PaymentBundle\Model\CreditCard\CaptureTransaction;
+use Kitano\Bundle\PaymentBundle\Model\AuthorizationTransaction;
+use Kitano\Bundle\PaymentBundle\Model\CaptureTransaction;
 use Kitano\Bundle\PaymentBundle\KitanoPaymentEvents;
 use Kitano\Bundle\PaymentBundle\Event\PaymentNotificationEvent;
 use Kitano\Bundle\PaymentBundle\Event\PaymentCaptureEvent;
@@ -125,17 +125,47 @@ class CmcicPaymentSystem implements CreditCardInterface
 
         $acknowledgment = "version=2\ncdr=1\n";
         if ($mac === $requestData['MAC']) {
-            $transaction->setValid(true);
+            $transaction->setSuccess(true);
             $acknowledgment = "version=2\ncdr=0\n";
+
+            switch(strtolower($requestData->get('code-retour', ''))) {
+                case 'payetest':
+                case 'paiement':
+                    $transaction->setState(Transaction::STATE_APPROVED);
+                break;
+
+                case 'annulation':
+                    switch(strtolower($requestData->get('motifrefus', ''))) {
+                        case 'refus':
+                            $transaction->setState(Transaction::STATE_REFUSED);
+                        break;
+                        case 'interdit':
+                            $transaction->setState(Transaction::STATE_BANK_BAN);
+                        break;
+                        case 'filtrage':
+                            $transaction->setState(Transaction::STATE_FILTERED);
+                        break;
+
+                        default:
+                            $transaction->setState(Transaction::STATE_FAILED);
+                    }
+                break;
+
+                default:
+                    $transaction->setState(Transaction::STATE_SERVER_ERROR);
+            }
         }
         else {
-            $transaction->setValid(false);
+            $transaction->setSuccess(false);
         }
 
+        $transaction->setExtraData(array('response' => $requestData->all()));
         $this->transactionRepository->save($transaction);
 
         $event = new PaymentNotificationEvent($transaction);
         $this->dispatcher->dispatch(KitanoPaymentEvents::PAYMENT_NOTIFICATION, $event);
+
+        return new Response($acknowledgment);
     }
 
     /**
@@ -158,6 +188,23 @@ class CmcicPaymentSystem implements CreditCardInterface
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
         curl_setopt($ch, CURLOPT_CAINFO, $this->getCertificatePath());
 
+        $transaction->setBaseTransaction($this->transactionRepository->findByOrderId($transaction->getOrderId()));
+        $captureList = $this->transactionRepository->findCaptureBy(array(
+            'orderId' => $transaction->getOrderId(),
+            'state' => CaptureTransaction::STATE_APPROVED,
+        ));
+
+        $captureAmountCumul = 0;
+        foreach($captureList as $capture) {
+            $captureAmountCumul += $capture->getAmount();
+        }
+
+        $remainingAmount = (float) ($transaction->getBaseTransaction()->getAmount() - $captureAmountCumul);
+        if ($remainingAmount <= 0) {
+            // TODO: Custom Exception
+            throw new \Exception();
+        }
+
         // Data
         $data = array(
             'version'              => $this->getVersion(),
@@ -166,8 +213,8 @@ class CmcicPaymentSystem implements CreditCardInterface
             'date_commande'        => $this->formatDate($transaction->getBaseTransaction()->getDate()),
             'montant'              => $this->formatAmount($transaction->getBaseTransaction()->getAmount(), $transaction->getCurrency()),
             'montant_a_capturer'   => $this->formatAmount($transaction->getAmount(), $transaction->getCurrency()),
-            'montant_deja_capture' => $this->formatAmount(0, $transaction->getCurrency()), // TODO
-            'montant_restant'      => $this->formatAmount($transaction->getRemainingAmount(), $transaction->getCurrency()),
+            'montant_deja_capture' => $this->formatAmount($captureAmountCumul, $transaction->getCurrency()), // TODO
+            'montant_restant'      => $this->formatAmount($remainingAmount, $transaction->getCurrency()),
             'reference'            => $this->formatAmount($transaction->getTransactionId(), $transaction->getCurrency()),
             'text-libre'           => '', // TODO
             'lgue'                 => $this->getLang(),
@@ -182,14 +229,88 @@ class CmcicPaymentSystem implements CreditCardInterface
         $response = curl_exec($ch);
         curl_close($ch);
 
-        // TODO: parse $reponse and populate Transaction
-        // $paymentResponse = $this->parseCaptureResponse();
+        $responseData = $this->parseCaptureResponse($response);
+        if (!is_array($responseData) || !array_key_exists('lib', $responseData)) {
+            $transaction->setState(CaptureTransaction::STATE_SERVER_ERROR);
+        }
+        else {
+            switch(strtolower($responseData['lib'])) {
+                case 'paiement accepte':
+                    $transaction->setState(CaptureTransaction::STATE_APPROVED);
+                break;
 
+                case 'commande non authentifiee':
+                    $transaction->setState(CaptureTransaction::STATE_UNKNOWN_ORDER);
+                break;
+
+                case 'commande expiree':
+                    $transaction->setState(CaptureTransaction::STATE_EXPIRED);
+                break;
+
+                case 'commande grillee':
+                    $transaction->setState(CaptureTransaction::STATE_ATTEMPT_LIMIT_REACHED);
+                break;
+
+                case 'autorisation refusee':
+                    $transaction->setState(CaptureTransaction::STATE_REFUSED);
+                break;
+
+                case 'paiement deja accepte':
+                    $transaction->setState(CaptureTransaction::STATE_ALREADY_APPROVED);
+                break;
+
+                case 'signature non valide':
+                case 'la demande ne peut aboutir':
+                case 'montant errone':
+                case 'commercant non identifie':
+                case 'date erronee':
+                    $transaction->setState(CaptureTransaction::STATE_INVALID_FORMAT);
+                break;
+
+                case 'traitement en cours':
+                    $transaction->setState(CaptureTransaction::STATE_APPROVING);
+                break;
+
+                case 'autre traitement en cours':
+                    $transaction->setState(CaptureTransaction::STATE_BUSY);
+                break;
+
+                case 'probleme technique':
+                    $transaction->setState(CaptureTransaction::STATE_SERVER_ERROR);
+                break;
+
+                default:
+                    $transaction->setState(CaptureTransaction::STATE_SERVER_ERROR);
+            }
+        }
+
+        $transaction->setExtraData(array(
+            'rawResponse' => $response,
+            'responseData' => $responseData,
+            'sentData' => $data
+        ));
         $this->transactionRepository->save($transaction);
 
-        // TODO: dispatch event
         $event = new PaymentCaptureEvent($transaction);
         $this->dispatcher->dispatch(KitanoPaymentEvents::PAYMENT_CAPTURE, $event);
+    }
+
+    /**
+     * @param string $response
+     * @return array
+     */
+    private function parseCaptureResponse($response)
+    {
+        $tmp = explode(chr(10), $response);
+        $data = array();
+        array_walk($tmp, function($item, $key) use ($data) {
+            $keyValue = explode('=', $item);
+            if (2 == count($keyValue)) {
+                $data[$keyValue[0]] = $data[$keyValue[1]];
+            }
+        });
+
+        return $data;
     }
 
     /**
