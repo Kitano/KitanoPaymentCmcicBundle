@@ -1,20 +1,20 @@
 {% autoescape false %}
 <form action="{{ requestUrl }}" method="post">
     {# CMCIC FIELDS #}
-    <input type="hidden" name="version" value="{{ version }}">
-    <input type="hidden" name="TPE" value="{{ tpe }}">
-    <input type="hidden" name="date" value="{{ date }}">
-    <input type="hidden" name="montant" value="{{ montant }}">
-    <input type="hidden" name="reference" value="{{ reference }}">
-    <input type="hidden" name="MAC" value="{{ mac }}">
-    <input type="hidden" name="url_retour" value="">
-    <input type="hidden" name="url_retour_ok" value="">
-    <input type="hidden" name="url_retour_err" value="">
-    <input type="hidden" name="lgue" value="{{ lgue }}">
-    <input type="hidden" name="societe" value="{{ societe }}">
-    <input type="hidden" name="texte-libre" value="{{ texte_libre }}">
-    <input type="hidden" name="mail" value="{{ mail }}">
+    <input type="hidden" name="version" value="{{ version }}"/>
+    <input type="hidden" name="TPE" value="{{ tpe }}"/>
+    <input type="hidden" name="date" value="{{ date }}"/>
+    <input type="hidden" name="montant" value="{{ montant }}"/>
+    <input type="hidden" name="reference" value="{{ reference }}"/>
+    <input type="hidden" name="MAC" value="{{ mac }}"/>
+    <input type="hidden" name="url_retour" value=""/>
+    <input type="hidden" name="url_retour_ok" value=""/>
+    <input type="hidden" name="url_retour_err" value=""/>
+    <input type="hidden" name="lgue" value="{{ lgue }}"/>
+    <input type="hidden" name="societe" value="{{ societe }}"/>
+    <input type="hidden" name="texte-libre" value="{{ texte_libre }}"/>
+    <input type="hidden" name="mail" value="{{ mail }}"/>
 
-    <input type="submit" value="Pay" />
+    <input type="submit" value="Pay"/>
 </form>
 {% endautoescape %}
