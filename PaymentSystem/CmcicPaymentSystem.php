@@ -14,6 +14,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Templating\EngineInterface;
 use Kitano\Bundle\PaymentBundle\Repository\TransactionRepositoryInterface;
+use Symfony\Component\HttpKernel\Log\LoggerInterface;
 
 class CmcicPaymentSystem implements CreditCardInterface
 {
@@ -52,6 +53,9 @@ class CmcicPaymentSystem implements CreditCardInterface
 
     /* @var TransactionRepositoryInterface */
     protected $transactionRepository;
+
+    /* @var LoggerInterface */
+    protected $logger;
 
 
     public function __construct(TransactionRepositoryInterface $transactionRepository, EventDispatcherInterface $dispatcher, EngineInterface $templating)
@@ -96,35 +100,38 @@ class CmcicPaymentSystem implements CreditCardInterface
         $transaction = $this->transactionRepository->findByOrderId($requestData->get('reference', null));
         if (null === $transaction) {
             // TODO: erreur
+            if (null !== $this->logger) {
+                $this->log(sprintf('Transaction not found for orderId #%s.', $requestData->get('reference', null)));
+            }
         }
         
         $macData = sprintf('%s*%s*%s*%s*%s*%s*%s*%s*%s*%s*%s*%s*%s*%s*%s*%s*%s*%s*%s*%s*',
-            $requestData->get('TPE', null),
-            $requestData->get('date', null),
-            $requestData->get('montant', null),
-            $requestData->get('reference', null),
-            $requestData->get('texte-libre', null),
-            $requestData->get('version', null),
-            $requestData->get('code-retour', null),
-            $requestData->get('cvx', null),
-            $requestData->get('vld', null),
-            $requestData->get('brand', null),
-            $requestData->get('status3ds', null),
-            $requestData->get('numauto', null),
-            $requestData->get('motifrefus', null),
-            $requestData->get('originecb', null),
-            $requestData->get('bincb', null),
-            $requestData->get('hpancb', null),
-            $requestData->get('ipclient', null),
-            $requestData->get('originetr', null),
-            $requestData->get('veres', null),
-            $requestData->get('pares', null)
+            $requestData->get('TPE', ''),
+            $requestData->get('date', ''),
+            $requestData->get('montant', ''),
+            $requestData->get('reference', ''),
+            $requestData->get('texte-libre', ''),
+            $requestData->get('version', ''),
+            $requestData->get('code-retour', ''),
+            $requestData->get('cvx', ''),
+            $requestData->get('vld', ''),
+            $requestData->get('brand', ''),
+            $requestData->get('status3ds', ''),
+            $requestData->get('numauto', ''),
+            $requestData->get('motifrefus', ''),
+            $requestData->get('originecb', ''),
+            $requestData->get('bincb', ''),
+            $requestData->get('hpancb', ''),
+            $requestData->get('ipclient', ''),
+            $requestData->get('originetr', ''),
+            $requestData->get('veres', ''),
+            $requestData->get('pares', '')
         );
 
         $mac = strtoupper($this->hashMac($macData));
 
         $acknowledgment = "version=2\ncdr=1\n";
-        if ($mac === $requestData->get('MAC')) {
+        if ($mac == $requestData->get('MAC', '')) {
             $transaction->setSuccess(true);
             $acknowledgment = "version=2\ncdr=0\n";
 
@@ -159,7 +166,7 @@ class CmcicPaymentSystem implements CreditCardInterface
             $transaction->setSuccess(false);
         }
 
-        $transaction->setExtraData(array('response' => $requestData->all()));
+        $transaction->setExtraData(array('response' => $requestData->all(), 'acknowledgment' => $acknowledgment));
         $this->transactionRepository->save($transaction);
 
         $event = new PaymentNotificationEvent($transaction);
@@ -571,5 +578,23 @@ class CmcicPaymentSystem implements CreditCardInterface
     public function getSandbox()
     {
         return $this->sandbox;
+    }
+
+    /**
+     * @param LoggerInterface $logger
+     */
+    public function setLogger(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+    }
+
+    /**
+     * @param string $message
+     */
+    public function log($message)
+    {
+        if (null !== $this->logger) {
+            $this->logger->debug($message);
+        }
     }
 }

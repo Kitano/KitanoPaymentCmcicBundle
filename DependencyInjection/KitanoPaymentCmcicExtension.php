@@ -7,6 +7,7 @@ use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\Config\FileLocator;
+use Symfony\Component\DependencyInjection\Reference;
 
 /**
  * Initializes extension
@@ -42,6 +43,13 @@ class KitanoPaymentCmcicExtension extends Extension
             'production' => 'kitano_payment_cmcic.config.url.production.%s',
             'sandbox'    => 'kitano_payment_cmcic.config.url.sandbox.%s',
         ));
+
+        if ($container->getParameter('kernel.debug') && $container->hasDefinition('kitano_payment_cmcic.payment_system.cmcic')) {
+            $paymentSystemDef = $container->getDefinition('kitano_payment_cmcic.payment_system.cmcic');
+            $paymentSystemDef->addMethodCall('setLogger', array(
+                new Reference('logger'),
+            ));
+        }
     }
 
     /**
