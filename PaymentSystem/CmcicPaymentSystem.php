@@ -218,7 +218,7 @@ class CmcicPaymentSystem implements CreditCardInterface
             'montant_a_capturer'   => $this->formatAmount($transaction->getAmount(), $transaction->getCurrency()),
             'montant_deja_capture' => $this->formatAmount($captureAmountCumul, $transaction->getCurrency()), // TODO
             'montant_restant'      => $this->formatAmount($remainingAmount, $transaction->getCurrency()),
-            'reference'            => $this->formatAmount($transaction->getOrderId(), $transaction->getCurrency()),
+            'reference'            => $transaction->getOrderId(),
             'text-libre'           => '', // TODO
             'lgue'                 => $this->getLang(),
             'societe'              => $this->getCompanyCode(),
@@ -309,7 +309,7 @@ class CmcicPaymentSystem implements CreditCardInterface
         array_walk($tmp, function($item, $key) use ($data) {
             $keyValue = explode('=', $item);
             if (2 == count($keyValue)) {
-                $data[$keyValue[0]] = $data[$keyValue[1]];
+                $data[$keyValue[0]] = $keyValue[1];
             }
         });
 
