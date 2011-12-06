@@ -97,7 +97,7 @@ class CmcicPaymentSystem implements CreditCardInterface
         if (null === $transaction) {
             // TODO: erreur
         }
-
+        
         $macData = sprintf('%s*%s*%s*%s*%s*%s*%s*%s*%s*%s*%s*%s*%s*%s*%s*%s*%s*%s*%s*%s*',
             $requestData->get('TPE', null),
             $requestData->get('date', null),
@@ -124,7 +124,7 @@ class CmcicPaymentSystem implements CreditCardInterface
         $mac = strtoupper($this->hashMac($macData));
 
         $acknowledgment = "version=2\ncdr=1\n";
-        if ($mac === $requestData['MAC']) {
+        if ($mac === $requestData->get('MAC')) {
             $transaction->setSuccess(true);
             $acknowledgment = "version=2\ncdr=0\n";
 
