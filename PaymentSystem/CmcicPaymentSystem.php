@@ -306,7 +306,7 @@ class CmcicPaymentSystem implements CreditCardInterface
     {
         $tmp = explode(chr(10), $response);
         $data = array();
-        array_walk($tmp, function($item, $key) use ($data) {
+        array_walk($tmp, function($item, $key) use (&$data) {
             $keyValue = explode('=', $item);
             if (2 == count($keyValue)) {
                 $data[$keyValue[0]] = $keyValue[1];
