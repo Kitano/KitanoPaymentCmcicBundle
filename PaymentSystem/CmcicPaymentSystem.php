@@ -218,11 +218,11 @@ class CmcicPaymentSystem implements CreditCardInterface
             'montant_a_capturer'   => $this->formatAmount($transaction->getAmount(), $transaction->getCurrency()),
             'montant_deja_capture' => $this->formatAmount($captureAmountCumul, $transaction->getCurrency()), // TODO
             'montant_restant'      => $this->formatAmount($remainingAmount, $transaction->getCurrency()),
-            'reference'            => $this->formatAmount($transaction->getTransactionId(), $transaction->getCurrency()),
+            'reference'            => $this->formatAmount($transaction->getOrderId(), $transaction->getCurrency()),
             'text-libre'           => '', // TODO
             'lgue'                 => $this->getLang(),
             'societe'              => $this->getCompanyCode(),
-            'MAC'                  => $this->computeCaptureMac($transaction),
+            'MAC'                  => $this->computeCaptureMac($transaction, $captureAmountCumul, $remainingAmount),
         );
 
         curl_setopt($ch, CURLOPT_POST, count($data));
@@ -385,14 +385,14 @@ class CmcicPaymentSystem implements CreditCardInterface
      *
      * @return string
      */
-    private function computeCaptureMac(CaptureTransaction $transaction)
+    private function computeCaptureMac(CaptureTransaction $transaction, $captureAmountCumul, $remainingAmount)
     {
         $data = sprintf('%s*%s*%s%s%s*%s*%s*%s*%s*%s*',
             $this->getTpe(),
             $this->formatDate($transaction->getDate()),
             $this->formatAmount($transaction->getAmount(), $transaction->getCurrency()),
-            $this->formatAmount($transaction->getCaptureAmount(), $transaction->getCurrency()),
-            $this->formatAmount($transaction->getRemainingAmount(), $transaction->getCurrency()),
+            $this->formatAmount($captureAmountCumul, $transaction->getCurrency()),
+            $this->formatAmount($remainingAmount, $transaction->getCurrency()),
             $transaction->getOrderId(),
             '',
             $this->getVersion(),
