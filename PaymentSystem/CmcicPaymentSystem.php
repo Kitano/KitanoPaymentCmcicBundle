@@ -97,7 +97,7 @@ class CmcicPaymentSystem implements CreditCardInterface
     {
         // TODO: Implement handlePaymentNotification() method.
         $requestData = $request->request;
-        $transaction = $this->transactionRepository->findByOrderId($requestData->get('reference', null));
+        $transaction = $this->transactionRepository->findAuthorizationByOrderId($requestData->get('reference', null));
         if (null === $transaction) {
             // TODO: erreur
             if (null !== $this->logger) {
@@ -195,8 +195,8 @@ class CmcicPaymentSystem implements CreditCardInterface
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
         curl_setopt($ch, CURLOPT_CAINFO, $this->getCertificatePath());
 
-        $transaction->setBaseTransaction($this->transactionRepository->findByOrderId($transaction->getOrderId()));
-        $captureList = $this->transactionRepository->findCaptureBy(array(
+        $transaction->setBaseTransaction($this->transactionRepository->findAuthorizationByOrderId($transaction->getOrderId()));
+        $captureList = $this->transactionRepository->findCapturesBy(array(
             'orderId' => $transaction->getOrderId(),
             'state' => CaptureTransaction::STATE_APPROVED,
         ));
