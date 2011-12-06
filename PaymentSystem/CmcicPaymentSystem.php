@@ -111,7 +111,7 @@ class CmcicPaymentSystem implements CreditCardInterface
             $requestData->get('montant', ''),
             $requestData->get('reference', ''),
             $requestData->get('texte-libre', ''),
-            $requestData->get('version', ''),
+            $this->getVersion(),
             $requestData->get('code-retour', ''),
             $requestData->get('cvx', ''),
             $requestData->get('vld', ''),
