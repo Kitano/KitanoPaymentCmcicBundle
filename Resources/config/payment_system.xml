@@ -5,7 +5,7 @@
     xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
 
     <parameters>
-        <parameter key="kitano_payment_cmcic.payment_system.cmcic.class">Kitano\Bundle\PaymentCmcicBundle\PaymentSystem\CmcicPaymentSystem</parameter>
+        <parameter key="kitano_payment_cmcic.payment_system.cmcic.class">Kitano\PaymentCmcicBundle\PaymentSystem\CmcicPaymentSystem</parameter>
     </parameters>
 
     <services>

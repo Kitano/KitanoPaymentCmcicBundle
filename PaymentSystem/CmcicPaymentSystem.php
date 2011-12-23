@@ -1,19 +1,19 @@
 <?php
 
-namespace Kitano\Bundle\PaymentCmcicBundle\PaymentSystem;
+namespace Kitano\PaymentCmcicBundle\PaymentSystem;
 
-use Kitano\Bundle\PaymentBundle\PaymentSystem\CreditCardInterface;
-use Kitano\Bundle\PaymentBundle\Model\Transaction;
-use Kitano\Bundle\PaymentBundle\Model\AuthorizationTransaction;
-use Kitano\Bundle\PaymentBundle\Model\CaptureTransaction;
-use Kitano\Bundle\PaymentBundle\KitanoPaymentEvents;
-use Kitano\Bundle\PaymentBundle\Event\PaymentNotificationEvent;
-use Kitano\Bundle\PaymentBundle\Event\PaymentCaptureEvent;
+use Kitano\PaymentBundle\PaymentSystem\CreditCardInterface;
+use Kitano\PaymentBundle\Model\Transaction;
+use Kitano\PaymentBundle\Model\AuthorizationTransaction;
+use Kitano\PaymentBundle\Model\CaptureTransaction;
+use Kitano\PaymentBundle\KitanoPaymentEvents;
+use Kitano\PaymentBundle\Event\PaymentNotificationEvent;
+use Kitano\PaymentBundle\Event\PaymentCaptureEvent;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Templating\EngineInterface;
-use Kitano\Bundle\PaymentBundle\Repository\TransactionRepositoryInterface;
+use Kitano\PaymentBundle\Repository\TransactionRepositoryInterface;
 use Symfony\Component\HttpKernel\Log\LoggerInterface;
 
 class CmcicPaymentSystem implements CreditCardInterface

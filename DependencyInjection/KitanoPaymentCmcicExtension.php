@@ -1,6 +1,6 @@
 <?php
 
-namespace Kitano\Bundle\PaymentCmcicBundle\DependencyInjection;
+namespace Kitano\PaymentCmcicBundle\DependencyInjection;
 
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 use Symfony\Component\Config\Definition\Processor;

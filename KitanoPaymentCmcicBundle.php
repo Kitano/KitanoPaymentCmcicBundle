@@ -1,6 +1,6 @@
 <?php
 
-namespace Kitano\Bundle\PaymentCmcicBundle;
+namespace Kitano\PaymentCmcicBundle;
 
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
