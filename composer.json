@@ -1,0 +1,27 @@
+{
+    "name": "kitano/payment-cmcic-bundle",
+    "description": "CMCIC payment system driver for kitano/payment-bundle.",
+    "keywords": ["payment","cmcic"],
+    "homepage": "http://github.com/Kitano/KitanoPaymentCmcicBundle",
+    "type": "symfony-bundle",
+    "license": "BSD",
+    "authors": [
+        {
+            "name": "Philippe Levan",
+            "email": "philippe.levan@kitpages.fr",
+            "homepage": "http://www.kitpages.fr"
+        },
+        {
+            "name": "Benjamin Dulau",
+            "email": "benjamin.dulau@anonymation.com",
+            "homepage": "http://www.anonymation.com"
+        }
+    ],
+    "require": {
+        "kitano/payment-bundle": "master-dev"
+    },
+    "autoload": {
+        "psr-0": { "Kitano\\PaymentCmcicBundle": "" }
+    },
+    "target-dir": "Kitano/PaymentCmcicBundle"
+}
